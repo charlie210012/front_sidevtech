@@ -46,7 +46,7 @@ export default {
             }
         };
 
-        axios.post(urlBase + 'api/component/ServicesSection/delete', requestBody, config)
+        axios.post(urlBase + 'api/component/delete', requestBody, config)
             .then(response => {
             console.log('Respuesta:', response.data);
             if(response.status == 200){

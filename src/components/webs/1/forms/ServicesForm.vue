@@ -119,12 +119,12 @@ export default {
     },
     submitForm() {
       const urlBase = localStorage.getItem('urlBase');
+      const clientId = localStorage.getItem("clientId");
       const requestBody = {
         icon: this.icon,
         link: this.link,
         title: this.title,
         description: this.description,
-        clientId: 3
       };
 
       const config = {
@@ -133,7 +133,7 @@ export default {
         }
       };
 
-      axios.post(urlBase + 'api/component/ServicesSection', requestBody, config)
+      axios.post(urlBase + 'api/component/'+clientId+'/ServicesSection', requestBody, config)
         .then(response => {
           console.log('Respuesta:', response.data);
           if(response.status == 201){

@@ -54,11 +54,11 @@ import axios from "axios";
 
 export default {
   props:{
-    data:{
-      type: Array,
-      required: true,
-    }
-  },
+      data: {
+        type: Array,
+        required: true
+      }
+    },
   data() {
     return {
       modalOpen: false,

@@ -10,7 +10,7 @@
           <img :src="message.sender == 'bot' ?imageSai:imageUser" alt="">
           <p class="chatbot-message-text">{{ message.content }}</p>
           <div v-if="message.activeComponent">
-            <component :is="message.component" @submit-clicked = "handleEvento" />
+            <component :gestion = "gestion"  :is="message.component" @submit-clicked = "handleEvento" />
           </div>  
       </div>
       <div class="chatbot-message" v-show="consult">
@@ -41,6 +41,19 @@ import {VProgressCircular} from 'vuetify/components';
 const dir = localStorage.getItem("clientId");
 const ServicesSection = dir != null ? require(`../webs/${dir}/ServicesSection.vue`).default : null;
 const ServicesForm = dir != null ? require(`../webs/${dir}/forms/ServicesForm.vue`).default : null;
+const WhyUsSection = dir != null ? require(`../webs/${dir}/WhyUsSection.vue`).default : null;
+const TeamSection = dir != null ? require(`../webs/${dir}/TeamSection.vue`).default : null;
+const AboutSection = dir != null ? require(`../webs/${dir}/AboutSection.vue`).default : null;
+const ChatBot = dir != null ? require(`../webs/${dir}/ChatBot.vue`).default : null;
+const ContactSection = dir != null ? require(`../webs/${dir}/ContactSection.vue`).default : null;
+const CTASection = dir != null ? require(`../webs/${dir}/CTASection.vue`).default : null;
+const FooterApp = dir != null ? require(`../webs/${dir}/FooterApp.vue`).default : null;
+const HeaderApp = dir != null ? require(`../webs/${dir}/HeaderApp.vue`).default : null;
+const HeroSection = dir != null ? require(`../webs/${dir}/HeroSection.vue`).default : null;
+const PortfolioSection = dir != null ? require(`../webs/${dir}/PortfolioSection.vue`).default : null;
+const PricingSection = dir != null ? require(`../webs/${dir}/PricingSection.vue`).default : null;
+const SkillsSection = dir != null ? require(`../webs/${dir}/SkillsSection.vue`).default : null;
+import ButtonComponents from "../utils/ButtonComponents.vue";
 
 const format = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, timeZone: 'America/Bogota' };
 
@@ -53,6 +66,7 @@ export default {
       imageUser: require('./assets/images/SaiCloud.svg'),
       imageSai: require('./assets/images/sai.png'),
       consult: false,
+      gestion: true,
       activeComponent: false,
       component: '',
       iconOptions: [
@@ -66,6 +80,19 @@ export default {
     VProgressCircular,
     ServicesSection,
     ServicesForm,
+    WhyUsSection,
+    TeamSection,
+    AboutSection,
+    ChatBot,
+    ContactSection,
+    CTASection,
+    FooterApp,
+    HeaderApp,
+    HeroSection,
+    PortfolioSection,
+    PricingSection,
+    SkillsSection,
+    ButtonComponents,
 },
   methods: {
     toggleChatbot() {

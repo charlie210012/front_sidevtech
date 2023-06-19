@@ -108,7 +108,6 @@ export default {
             })
             .then((response) => {
                 localStorage.setItem('accessToken', response.data.access_token);
-                localStorage.setItem('clientId', 3);
                 this.authenticateUser(this.password, this.email);
             });
             
@@ -130,6 +129,7 @@ export default {
                     //Si la autenticación es exitosa, guarda el token en el almacenamiento local y redirige al usuario
                 if (response.status == 200) {
                     localStorage.setItem("userToken", response.data.token);
+                    localStorage.setItem("clientId", response.data.business_id);
                     this.$router.push("/dashboard");
                 } else {
                     alert("Error: la autenticación falló");

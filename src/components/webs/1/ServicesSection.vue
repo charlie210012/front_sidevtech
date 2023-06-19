@@ -2,8 +2,11 @@
   <section id="services" class="services section-bg">
     <div class="container" data-aos="fade-up">
       <div class="section-title">
-        <h2>Servicios</h2>
-        <p>
+        <div class = "title-box">
+          <h2>Servicios</h2>
+          <ServicesForm v-if ="gestion" @submit-clicked = "handleEvento"/>
+        </div>
+        <p style="text-justify: auto;">
           Si deseas automatizar los procesos de tu empresa, llevar a cabo una idea basada en tecnología, crear
           una tienda virtual, una página web o una aplicación web para tu idea de negocio, nosotros podemos ayudarte.
         </p>
@@ -13,7 +16,7 @@
         <div v-for="(service, index) in services" :key="index" class="col-xl-3 col-md-6" data-aos="zoom-in">
           <div class="icon-box d-flex flex-column">
             <div class="icon"><i :class="service.icon"></i></div>
-            <div class="col-auto text-right">
+            <div class="col-auto text-right" v-if = "gestion">
               <span class="mr-2">
                 <DeleteCustom :id="service.id" @deleted="handleEvento" />
               </span>
@@ -34,6 +37,7 @@
 <script>
 import axios from "axios";
 import DeleteCustom from "@/components/utils/DeleteCustom.vue";
+import ServicesForm from "./forms/ServicesForm.vue";
 
 const dir = localStorage.getItem("clientId");
 const UpdateServicesForm = dir != null ? require(`@/components/webs/${dir}/updateForm/UpdateServicesForm.vue`).default : null;
@@ -43,6 +47,13 @@ export default {
   components: {
     DeleteCustom,
     UpdateServicesForm,
+    ServicesForm
+  },
+  props:{
+    gestion: {
+      type: Boolean,
+      required: false,
+    }
   },
   data() {
     return {
@@ -55,8 +66,9 @@ export default {
   methods: {
     getServicesSection() {
       const urlBase = localStorage.getItem('urlBase');
+      const clientId = localStorage.getItem("clientId");
       axios
-        .get(urlBase + 'api/component/ServicesSection')
+        .get(urlBase + 'api/component/'+clientId+'/ServicesSection')
         .then(response => {
           this.services = response.data.data ?? [];
         })
@@ -106,6 +118,12 @@ export default {
   color: #37517e;
   transition: ease-in-out 0.3s;
   text-decoration: none;
+}
+
+.title-box {
+  display: flex;
+  align-items: center;
+  gap: 30px; /* Espacio entre los elementos */
 }
 
 .services .icon-box p {
