@@ -9,9 +9,11 @@
       <div v-for="message in messages" :key="message.id" class="chatbot-message" :class="{'chatbot-message-bot': message.sender === 'bot', 'chatbot-message-user': message.sender === 'user'}">
           <img :src="message.sender == 'bot' ?imageSai:imageUser" alt="">
           <p class="chatbot-message-text">{{ message.content }}</p>
-          <div v-if="message.activeComponent">
-            <component :gestion = "gestion"  :is="message.component" @submit-clicked = "handleEvento" />
-          </div>  
+          <div class="container" style="overflow: visible; padding: 5px;">
+            <div v-if="message.activeComponent" class="component-container" style="overflow: hidden; padding: 20px;">
+              <component :gestion="gestion" :is="message.component" @submit-clicked="handleEvento" />
+            </div>
+          </div>
       </div>
       <div class="chatbot-message" v-show="consult">
         <img :src="imageSai" alt="">
@@ -54,6 +56,7 @@ const PortfolioSection = dir != null ? require(`../webs/${dir}/PortfolioSection.
 const PricingSection = dir != null ? require(`../webs/${dir}/PricingSection.vue`).default : null;
 const SkillsSection = dir != null ? require(`../webs/${dir}/SkillsSection.vue`).default : null;
 import ButtonComponents from "../utils/ButtonComponents.vue";
+import ButtonPreview from "../utils/ButtonPreview.vue";
 
 const format = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, timeZone: 'America/Bogota' };
 
@@ -93,6 +96,7 @@ export default {
     PricingSection,
     SkillsSection,
     ButtonComponents,
+    ButtonPreview
 },
   methods: {
     toggleChatbot() {
@@ -160,14 +164,14 @@ export default {
     },
     handleEvento(payload){
       this.addMessage({
-            id: Date.now(),
-            sender: 'bot',
-            content: payload.message,
-            link: '',
-            activeComponent: payload.activeComponent ?? false,
-            component: payload.component ?? null,
-            timestamp: new Date().toLocaleTimeString('es-ES',format)
-          });
+        id: Date.now(),
+        sender: 'bot',
+        content: payload.message,
+        link: '',
+        activeComponent: payload.activeComponent ?? false,
+        component: payload.component ?? null,
+        timestamp: new Date().toLocaleTimeString('es-ES',format)
+      });
     },
     logout() {
     // Realiza las acciones necesarias para cerrar la sesión del usuario
@@ -210,7 +214,7 @@ export default {
   border-radius: 8px;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
   font-family: Arial, sans-serif;
-  z-index: 9999;
+  z-index: 1000;
 }
 
 

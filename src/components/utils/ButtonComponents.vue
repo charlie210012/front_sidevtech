@@ -76,5 +76,17 @@
     flex-shrink: 0; /* Evita que los botones se reduzcan en tamaño */
     max-width: calc(25% - 10px); /* Ancho máximo de cada botón para mostrar 4 botones por línea */
   }
+  
+  @media (max-width: 768px) {
+    /* Modificaciones para dispositivos móviles */
+    .btn-box {
+      justify-content: center; /* Alinea los botones al centro */
+      padding-bottom: 0; /* Elimina el espacio inferior */
+    }
+    
+    .btn {
+      max-width: calc(50% - 10px); /* Ancho máximo de cada botón para mostrar 2 botones por línea */
+    }
+  }
   </style>
   

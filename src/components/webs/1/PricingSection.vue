@@ -4,19 +4,28 @@
         <div class="section-title">
           <h2>Precios</h2>
           <p>Nuestros precios están sujetos a los requerimientos del cliente.</p>
+          <FormDinamic :component = "component" v-if ="gestion" @submit-clicked = "handleEvento"/>
         </div>
   
         <div class="row">
           <div v-for="item in pricingItems" :key="item.id" class="col-lg-4 mt-4">
+            <div class="col-auto text-right" v-if = "gestion">
+              <span class="mr-2">
+                <DeleteCustom :id="item.id" @deleted="handleEvento" />
+              </span>
+              <span>
+                <UpdateFormDinamic :component="component" :data = "item" @update="handleUpdate"/>
+              </span>
+            </div>
             <div class="box" data-aos="fade-up" :data-aos-delay="item.delay">
               <h3>{{ item.title }}</h3>
-              <!-- <h4><sup>$</sup>{{ item.price }} COP<span>Desde</span></h4> -->
+              <h4><sup>$</sup>{{ item.price }} COP<span>Desde</span></h4>
               <ul>
                 <li v-for="feature in item.features" :key="feature.id">
-                  <i class="bx bx-check"></i> {{ feature.description }}
+                  <i class="bx bx-check"></i> {{ feature }}
                 </li>
               </ul>
-              <a href="#contact" class="buy-btn">Quiero saber más</a>
+              <a :href="item.link" class="buy-btn">Quiero saber más</a>
             </div>
           </div>
         </div>
@@ -25,51 +34,54 @@
   </template>
   
   <script>
+  import axios from "axios";
+  import DeleteCustom from "@/components/utils/DeleteCustom.vue";
+  import FormDinamic from "@/components/utils/FormDinamic.vue";
+  import UpdateFormDinamic from "@/components/utils/UpdateFormDinamic.vue";
   export default {
     name: 'PricingSection',
+    props:{
+    gestion: {
+        type: Boolean,
+        required: false,
+      }
+    },
+    components: {
+      DeleteCustom,
+      UpdateFormDinamic,
+      FormDinamic
+    },
+    mounted() {
+      this.getServicesSection();
+    },
+    methods:{
+      getServicesSection() {
+        const urlBase = localStorage.getItem('urlBase');
+        const clientId = localStorage.getItem("clientId");
+        axios
+          .get(urlBase + 'api/component/'+clientId+'/' + this.component)
+          .then(response => {
+            console.log(response.data);
+            this.pricingItems = response.data.data ?? [];
+          })
+          .catch(error => {
+            this.errorMessage = 'Se produjo un erro al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
+            // Ocurrió un error al enviar la solicitud
+            console.error(error); // Imprime el error en la consola
+            // Puedes mostrar un mensaje de error aquí
+          });
+      },
+      handleEvento() {
+        this.getServicesSection();
+      },
+      handleUpdate(){
+        this.getServicesSection();
+      }
+    },
     data() {
       return {
-        pricingItems: [
-          {
-            id: 1,
-            title: 'Páginas web',
-            price: '800.000',
-            features: [
-              { id: 1, description: 'Diseño personalizado' },
-              { id: 2, description: 'Correo corporativos' },
-              { id: 3, description: 'Comportamientos e interatividad' },
-              { id: 4, description: 'Enlace con redes sociales' },
-              { id: 5, description: 'SSL Seguridad Garantizada' }
-            ],
-            delay: 100
-          },
-          {
-            id: 2,
-            title: 'Plataformas web',
-            price: '4.200.000',
-            features: [
-              { id: 1, description: 'Cumple tus especificaciones' },
-              { id: 2, description: 'Interfaz interactiva' },
-              { id: 3, description: 'Arquitectura de bases de datos' },
-              { id: 4, description: 'Estructuras API´S' },
-              { id: 5, description: 'FRONTEND Y BACKEND ESPECIALIZADOS' }
-            ],
-            delay: 200
-          },
-          {
-            id: 3,
-            title: 'Aplicaciones móviles',
-            price: '5.000.000',
-            features: [
-              { id: 1, description: 'Interfaz personalizadas' },
-              { id: 2, description: 'Requerimientos y comportamientos únicos' },
-              { id: 3, description: 'Para android o ios' },
-              { id: 4, description: 'Enlazadas a tus bases de datos' },
-              { id: 5, description: 'Arquitectura de backend' }
-            ],
-            delay: 300
-          }
-        ]
+        pricingItems: [],
+        component: 'PricingSection'
       };
     }
   };

@@ -156,6 +156,7 @@
     #footer {
     font-size: 14px;
     background: #37517e;
+    z-index: 1000;
     }
 
     #footer .footer-newsletter {

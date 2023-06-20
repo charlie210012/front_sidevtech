@@ -3,7 +3,8 @@
     <div v-if="modalOpen" class="modal-overlay" style ="text-align: left;">
       <div class="modal-content">
         <div class="header-modal">
-          <h3>Actualizar</h3>
+          <h3 v-if="component != 'ChatBot'">Actualizar</h3>
+          <p :class="{ 'text-black': component === 'ChatBot' }" v-else>Actualiza la información de tu empresa</p>
           <button @click="closeModal">X</button>
         </div>
         <form>
@@ -20,6 +21,29 @@
                 <option v-for="option in field.options" :value="option.value" :key="option.value">{{ option.label }}</option>
               </select>
               <input
+                v-else-if="field.type === 'file'"
+                :type="field.type"
+                :id="field.name"
+                :name="field.name"
+                class="form-control"
+                @change="handleFileUpload"
+              />
+              <div v-else-if="field.type === 'multi-text'">
+                <div v-for="(value, valueIndex) in formData[field.name]" :key="valueIndex">
+                  <input
+                    :type="field.subType || 'text'"
+                    :id="field.name + '-' + valueIndex"
+                    :name="field.name"
+                    :placeholder="field.placeholder"
+                    class="form-control"
+                    v-model="formData[field.name][valueIndex]"
+                  />
+                  <button type="button" class="btn btn-danger" @click="removeDescriptionField(field.name, valueIndex)">Quitar</button>
+                </div>
+                <button type="button" class="btn btn-primary" @click="addDescriptionField(field.name)">Agregar</button>
+              </div>
+              <input
+                v-else
                 :type="field.type"
                 :id="field.name"
                 :name="field.name"
@@ -107,22 +131,27 @@
       this.formStructure();
     },
     methods: {
-        formStructure(){
-            const urlBase = localStorage.getItem('urlBase');
-            const clientId = localStorage.getItem("clientId");
-            axios
-                .get(urlBase + 'api/form/'+clientId+'/' +this.component)
-                .then(response => {
-                  console.log(response.data.structure);
-                  this.formFields = response.data.structure ?? [];
-                })
-                .catch(error => {
-                this.errorMessage = 'Se produjo un erro al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
-                // Ocurrió un error al enviar la solicitud
-                console.error(error); // Imprime el error en la consola
-                // Puedes mostrar un mensaje de error aquí
-                });
-        },
+      removeDescriptionField(fieldName, index) {
+        if (Array.isArray(this.formData[fieldName])) {
+          this.formData[fieldName].splice(index, 1); // Elimina el campo en el índice específico del array
+        }
+      },
+      formStructure(){
+          const urlBase = localStorage.getItem('urlBase');
+          const clientId = localStorage.getItem("clientId");
+          axios
+              .get(urlBase + 'api/form/'+clientId+'/' +this.component)
+              .then(response => {
+                console.log(response.data.structure);
+                this.formFields = response.data.structure ?? [];
+              })
+              .catch(error => {
+              this.errorMessage = 'Se produjo un erro al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
+              // Ocurrió un error al enviar la solicitud
+              console.error(error); // Imprime el error en la consola
+              // Puedes mostrar un mensaje de error aquí
+              });
+      },
       openModal() {
         this.modalOpen = true;
         this.formData = this.data;
@@ -170,6 +199,26 @@
       getIcon(icon){
         this.selectedIcon = icon;
         console.log(icon);
+      },
+      handleFileUpload(event) {
+          const file = event.target.files[0];
+          const reader = new FileReader();
+
+          reader.onload = () => {
+            const fileData = reader.result;
+
+            // Guarda los datos de la imagen en el objeto formData
+            this.formData[event.target.name] = fileData;
+          };
+
+          reader.readAsDataURL(file);
+      },
+      addDescriptionField(fieldName) {
+        if (Array.isArray(this.formData[fieldName])) {
+          this.formData[fieldName].push(''); // Agrega una nueva descripción vacía al array
+        } else {
+          this.formData[fieldName] = ['']; // Crea un nuevo array con una descripción vacía
+        }
       }
     },
   };

@@ -1,5 +1,5 @@
 <template>
-  <section id="services" class="services section-bg">
+  <section id="services" class="services">
     <div class="container" data-aos="fade-up">
       <div class="section-title">
         <div class = "title-box">
@@ -14,16 +14,18 @@
 
       <div class="row">
         <div v-for="(service, index) in services" :key="index" class="col-xl-3 col-md-6" data-aos="zoom-in">
-          <div class="icon-box d-flex flex-column">
-            <div class="icon"><i :class="service.icon"></i></div>
-            <div class="col-auto text-right" v-if = "gestion">
+          <div class="col-auto text-right">
+            <div v-if="gestion">
               <span class="mr-2">
                 <DeleteCustom :id="service.id" @deleted="handleEvento" />
               </span>
               <span>
-                <UpdateServicesForm :data = "service" @update="handleUpdate"/>
+                <UpdateServicesForm :data="service" @update="handleUpdate" />
               </span>
             </div>
+          </div>
+          <div class="icon-box d-flex flex-column">
+            <div class="icon"><i :class="service.icon"></i></div>
             <!-- puedes usar :href="service.link" para enlazarlo a una pagina -->
             <h4><a>{{ service.title }}</a></h4>
             <p>{{ service.description }}</p>
@@ -91,6 +93,11 @@ export default {
 
 <style scoped>
 /* Estilos existentes para las tarjetas de servicios */
+
+.container {
+  z-index: 2000;
+}
+
 .services .icon-box {
   box-shadow: 0px 0 25px 0 rgba(0, 0, 0, 0.1);
   padding: 50px 30px;

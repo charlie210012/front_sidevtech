@@ -86,6 +86,9 @@ export default {
       accordionItems: []
     };
   },
+  mounted() {
+    this.getServicesSection();
+  },
   methods: {
     toggleAccordion(index) {
       this.accordionItems.forEach((item, i) => {

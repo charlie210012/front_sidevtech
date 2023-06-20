@@ -5,6 +5,8 @@
           <h2>{{ portfolioTitle }}</h2>
           <p>{{ portfolioDescription }}</p>
         </div>
+        <FormDinamic :component = "component" v-if ="gestion" @submit-clicked = "handleEvento"/>
+
   
         <ul id="portfolio-flters" class="d-flex justify-content-center" data-aos="fade-up" data-aos-delay="100">
           <li v-for="filter in filters" @click="setFilter(filter.value)" :key="filter.value" :data-filter="filter.value" :class="['portfolio-filter', { 'filter-active': filter.value === currentFilter }]">{{ filter.label }}</li>
@@ -12,6 +14,14 @@
   
         <div class="row portfolio-container" data-aos="fade-up" data-aos-delay="200">
           <div v-for="item in filteredItems" :key="item.id" :class="['col-lg-4 col-md-6 portfolio-item', item.filter]">
+            <div class="col-auto text-right" v-if = "gestion">
+              <span class="mr-2">
+                <DeleteCustom :id="item.id" @deleted="handleEvento" />
+              </span>
+              <span>
+                <UpdateFormDinamic :component="component" :data = "item" @update="handleUpdate"/>
+              </span>
+            </div>
             <div class="portfolio-img">
               <img :src="item.image" class="img-fluid" alt="">
             </div>
@@ -37,46 +47,64 @@
 </template>
   
 <script>
+import axios from "axios";
+import DeleteCustom from "@/components/utils/DeleteCustom.vue";
+import FormDinamic from "@/components/utils/FormDinamic.vue";
+import UpdateFormDinamic from "@/components/utils/UpdateFormDinamic.vue";
+
 
 import ImagenModal from '@/components/utils/ImagenModal.vue';
   export default {
         name: 'PortfolioSection',
         components: {
-          ImagenModal
+          ImagenModal,
+          DeleteCustom,
+          UpdateFormDinamic,
+          FormDinamic
+        },
+        props:{
+          gestion: {
+            type: Boolean,
+            required: false,
+          }
+        },
+        mounted() {
+          this.getServicesSection();
         },
         data() {
             return {
+                component:'PortfolioSection',
                 showPopup: false,
                 popupImage: '',
                 portfolioItems: [
-                {
-                    id: 1,
-                    filter: 'filter-he',
-                    image: require('./assets/portfolio/11.jpg'),
-                    title: 'Visual Studio',
-                    category: 'Herramientas'
-                },
-                {
-                    id: 2,
-                    filter: 'filter-web',
-                    image: require('./assets/portfolio/2.jpg'),
-                    title: 'Borja Grupo Construcciones',
-                    category: 'Web'
-                },
-                {
-                    id: 3,
-                    filter: 'filter-pw',
-                    image: require('./assets/portfolio/9.jpg'),
-                    title: 'Pradosystem',
-                    category: 'Plataforma web'
-                },
-                {
-                    id: 4,
-                    filter: 'filter-pw',
-                    image: require('./assets/portfolio/4.jpg'),
-                    title: 'Entregalo',
-                    category: 'Plataforma web'
-                }
+                // {
+                //     id: 1,
+                //     filter: 'filter-he',
+                //     image: require('./assets/portfolio/11.jpg'),
+                //     title: 'Visual Studio',
+                //     category: 'Herramientas'
+                // },
+                // {
+                //     id: 2,
+                //     filter: 'filter-web',
+                //     image: require('./assets/portfolio/2.jpg'),
+                //     title: 'Borja Grupo Construcciones',
+                //     category: 'Web'
+                // },
+                // {
+                //     id: 3,
+                //     filter: 'filter-pw',
+                //     image: require('./assets/portfolio/9.jpg'),
+                //     title: 'Pradosystem',
+                //     category: 'Plataforma web'
+                // },
+                // {
+                //     id: 4,
+                //     filter: 'filter-pw',
+                //     image: require('./assets/portfolio/4.jpg'),
+                //     title: 'Entregalo',
+                //     category: 'Plataforma web'
+                // }
                 ],
                 filters: [
                     { label: 'Todos', value: '*' },
@@ -117,6 +145,28 @@ import ImagenModal from '@/components/utils/ImagenModal.vue';
               if (!event.target.classList.contains('popup-image')) {
                 this.closePopup();
               }
+            },
+            getServicesSection() {
+              const urlBase = localStorage.getItem('urlBase');
+              const clientId = localStorage.getItem("clientId");
+              axios
+                .get(urlBase + 'api/component/'+clientId+'/' + this.component)
+                .then(response => {
+                  console.log(response.data);
+                  this.portfolioItems = response.data.data ?? [];
+                })
+                .catch(error => {
+                  this.errorMessage = 'Se produjo un erro al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
+                  // Ocurrió un error al enviar la solicitud
+                  console.error(error); // Imprime el error en la consola
+                  // Puedes mostrar un mensaje de error aquí
+                });
+            },
+            handleEvento() {
+              this.getServicesSection();
+            },
+            handleUpdate(){
+              this.getServicesSection();
             }
             
         }

@@ -1,5 +1,10 @@
 <template>
-  <header :class="{'header-scrolled': isHeaderScrolled}" id="header" class="fixed-top">
+  <header 
+  :class="{
+    'header-scrolled': isHeaderScrolled, 
+    'fixed-top': !gestion,
+    'header-scrolled': gestion 
+    }" id="header">
     <div class="container d-flex justify-content-between align-items-center">
       <div class="logo">
         <img src="./assets/logo-blanco.png" id="logo" class="" alt="logo">
@@ -8,10 +13,19 @@
       <nav class="nav-menu d-lg-flex align-items-right">
         <ul v-if="!isMobile || isMobileMenuOpen">
           <li class="active"><a href="#">Home</a></li>
-          <li><a href="#about">Acerca de Nosotros</a></li>
-          <li><a href="#services">Servicios</a></li>
-          <li><a href="#portfolio">Portafolio</a></li>
-          <li><a href="#contact">Contacto</a></li>
+          <li v-for = "(menu,index) in menus" :key="index">
+            <a :href="menu.link">
+              {{menu.title}}
+              <div class="col-auto text-right" v-if = "gestion">
+                <span class="mr-2">
+                  <DeleteCustom :id="menu.id" @deleted="handleEvento" />
+                </span>
+                <span>
+                  <UpdateFormDinamic :component="component" :data = "menu" @update="handleUpdate"/>
+                </span>
+              </div>
+            </a>
+          </li>
           <li><a href="https://intelligentsai.sidevtech.com/login" target="_blank" class="get-started-btn scrollto">Iniciar Sesion</a></li>
         </ul>
         
@@ -35,24 +49,42 @@
       </ul>
     </b-modal> -->
   </header>
+  <FormDinamic :component = "component" v-if ="gestion" @submit-clicked = "handleEvento"/>
 </template>
 
 <script>
+
+import axios from "axios";
+import DeleteCustom from "@/components/utils/DeleteCustom.vue";
+import FormDinamic from "@/components/utils/FormDinamic.vue";
+import UpdateFormDinamic from "@/components/utils/UpdateFormDinamic.vue";
 
 import MenuDesplegable from '@/components/utils/MenuDesplegable.vue'
 export default {
   name: 'HeaderApp',
   components: {
-    MenuDesplegable
+    MenuDesplegable,
+    DeleteCustom,
+    UpdateFormDinamic,
+    FormDinamic
+  },
+  props:{
+    gestion: {
+      type: Boolean,
+      required: false,
+    }
   },
   data() {
     return {
       isHeaderScrolled: false,
       isMobile: false,
-      isMobileMenuOpen: false
+      isMobileMenuOpen: false,
+      component:'HeaderApp',
+      menus: []
     };
   },
   mounted() {
+    this.getServicesSection();
     window.addEventListener('scroll', this.handleScroll);
     this.checkScreenWidth();
     window.addEventListener('resize', this.checkScreenWidth);
@@ -74,6 +106,28 @@ export default {
     checkScreenWidth() {
       this.isMobile = window.innerWidth <= 1024;
       console.log(this.isMobile);
+    },
+    getServicesSection() {
+      const urlBase = localStorage.getItem('urlBase');
+      const clientId = localStorage.getItem("clientId");
+      axios
+        .get(urlBase + 'api/component/'+clientId+'/' + this.component)
+        .then(response => {
+          console.log(response.data);
+          this.menus = response.data.data ?? [];
+        })
+        .catch(error => {
+          this.errorMessage = 'Se produjo un erro al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
+          // Ocurrió un error al enviar la solicitud
+          console.error(error); // Imprime el error en la consola
+          // Puedes mostrar un mensaje de error aquí
+        });
+    },
+    handleEvento() {
+      this.getServicesSection();
+    },
+    handleUpdate(){
+      this.getServicesSection();
     }
   }
 }
@@ -171,5 +225,138 @@ export default {
   .mobile-menu {
     display: block;
   }
+}
+
+/*--------------------------------------------------------------
+# Navigation Menu
+--------------------------------------------------------------*/
+/* Desktop Navigation */
+.nav-menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-menu > ul {
+  display: flex;
+}
+
+.nav-menu > ul > li {
+  position: relative;
+  white-space: nowrap;
+  padding: 10px 0 10px 28px;
+}
+
+.nav-menu a {
+  display: block;
+  position: relative;
+  color: #fff;
+  transition: 0.3s;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  font-family: "Open Sans", sans-serif;
+  text-decoration: none;
+}
+
+.nav-menu a:hover, .nav-menu .active > a, .nav-menu li:hover > a {
+  color: #47b2e4;
+}
+
+.nav-menu .drop-down ul {
+  border-radius: 8px;
+  display: block;
+  position: absolute;
+  left: 14px;
+  top: calc(100% + 30px);
+  z-index: 99;
+  opacity: 0;
+  visibility: hidden;
+  padding: 10px 0;
+  background: #fff;
+  box-shadow: 0px 0px 30px rgba(127, 137, 161, 0.25);
+  transition: 0.3s;
+}
+
+.nav-menu .drop-down:hover > ul {
+  opacity: 1;
+  top: 100%;
+  visibility: visible;
+}
+
+.nav-menu .drop-down li {
+  min-width: 180px;
+  position: relative;
+}
+
+.nav-menu .drop-down ul a {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: none;
+  color: #0c3c53;
+}
+
+.nav-menu .drop-down ul a:hover, .nav-menu .drop-down ul .active > a, .nav-menu .drop-down ul li:hover > a {
+  color: #47b2e4;
+}
+
+.nav-menu .drop-down > a:after {
+  content: "\ea99";
+  font-family: IcoFont;
+  padding-left: 5px;
+}
+
+.nav-menu .drop-down .drop-down ul {
+  top: 0;
+  left: calc(100% - 30px);
+}
+
+.nav-menu .drop-down .drop-down:hover > ul {
+  opacity: 1;
+  top: 0;
+  left: 100%;
+}
+
+.nav-menu .drop-down .drop-down > a {
+  padding-right: 35px;
+}
+
+.nav-menu .drop-down .drop-down > a:after {
+  content: "\eaa0";
+  font-family: IcoFont;
+  position: absolute;
+  right: 15px;
+}
+
+@media (max-width: 1366px) {
+  .nav-menu .drop-down .drop-down ul {
+    left: -90%;
+  }
+  .nav-menu .drop-down .drop-down:hover > ul {
+    left: -100%;
+  }
+  .nav-menu .drop-down .drop-down > a:after {
+    content: "\ea9d";
+  }
+}
+
+/* Get Startet Button */
+.get-started-btn {
+  margin-left: 25px;
+  color: #fff;
+  border-radius: 50px;
+  padding: 6px 25px 7px 25px;
+  white-space: nowrap;
+  transition: 0.3s;
+  font-size: 14px;
+  display: inline-block;
+  border: 2px solid #47b2e4;
+  font-weight: 600;
+}
+
+.get-started-btn:hover {
+  background: #31a9e1;
+  color: #fff;
 }
 </style>
