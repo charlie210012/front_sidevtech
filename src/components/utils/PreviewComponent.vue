@@ -1,101 +1,145 @@
 <template>
   <div>
     <body>
-      <div v-for="(seccion, index) in structure" :key = "index">
-        <component :gestion ="gestion" :is="seccion.component" @submit-clicked="handleEvento" />
+      <ButtonEditable @gestion ="HadleChange" />
+      <div v-if="isLoading">
+        <div class="loading-circle"></div>
+      </div>
+      <div v-show="!isLoading">
+        <ButtonPayment />
+        <div v-for="(seccion, index) in structure" :key="index">
+          <component
+            v-if="isComponentLoaded(seccion.key)"
+            :gestion="gestion"
+            :is="seccion.key"
+            @submit-clicked="handleEvento"
+          />
+        </div>
       </div>
     </body>
   </div>
 </template>
-  
-  <script>
-  import axios from "axios";
-  const dir = localStorage.getItem("clientId");
-  const ServicesSection = dir != null ? require(`../webs/${dir}/ServicesSection.vue`).default : null;
-  const ServicesForm = dir != null ? require(`../webs/${dir}/forms/ServicesForm.vue`).default : null;
-  const WhyUsSection = dir != null ? require(`../webs/${dir}/WhyUsSection.vue`).default : null;
-  const TeamSection = dir != null ? require(`../webs/${dir}/TeamSection.vue`).default : null;
-  const AboutSection = dir != null ? require(`../webs/${dir}/AboutSection.vue`).default : null;
-  const ChatBot = dir != null ? require(`../webs/${dir}/ChatBot.vue`).default : null;
-  const ContactSection = dir != null ? require(`../webs/${dir}/ContactSection.vue`).default : null;
-  const CTASection = dir != null ? require(`../webs/${dir}/CTASection.vue`).default : null;
-  const FooterApp = dir != null ? require(`../webs/${dir}/FooterApp.vue`).default : null;
-  const HeaderApp = dir != null ? require(`../webs/${dir}/HeaderApp.vue`).default : null;
-  const HeroSection = dir != null ? require(`../webs/${dir}/HeroSection.vue`).default : null;
-  const PortfolioSection = dir != null ? require(`../webs/${dir}/PortfolioSection.vue`).default : null;
-  const PricingSection = dir != null ? require(`../webs/${dir}/PricingSection.vue`).default : null;
-  const SkillsSection = dir != null ? require(`../webs/${dir}/SkillsSection.vue`).default : null;
-  export default {
-    data() {
-      return {
-        business:'',
-        structure:[],
-        gestion:true,
+
+<script>
+import axios from "axios";
+import ButtonEditable from "./ButtonEditable.vue";
+import ButtonPayment from "./ButtonPayment.vue";
+
+export default {
+  data() {
+    return {
+      business: "",
+      structure: [],
+      gestion: true,
+      isLoading: true,
+      loadedComponents: [], // Array para rastrear los componentes cargados
+    };
+  },
+  components: {
+    ButtonEditable,
+    ButtonPayment,
+  },
+  methods: {
+    getServicesSection() {
+      const urlBase = localStorage.getItem("urlBase");
+      localStorage.setItem("clientId", this.business);
+      const clientId = this.business;
+
+      const config = {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("userToken"),
+        },
       };
-    },
-    components:{
-    ServicesSection,
-    ServicesForm,
-    WhyUsSection,
-    TeamSection,
-    AboutSection,
-    ChatBot,
-    ContactSection,
-    CTASection,
-    FooterApp,
-    HeaderApp,
-    HeroSection,
-    PortfolioSection,
-    PricingSection,
-    SkillsSection,
-},
-    methods: {
-      getServicesSection() {
-        const urlBase = localStorage.getItem('urlBase');
 
-        const config = {
-            headers: {
-              Authorization: 'Bearer '+ localStorage.getItem('userToken')
+      axios
+        .get(urlBase + "api/web/" + clientId + "/structure", config)
+        .then((response) => {
+          this.structure = response.data.structure ?? [];
+
+          const componentPromises = this.structure.map((element) => {
+            if (element.component) {
+              return import(`../webs/${element.component}.vue`).then(({ default: component }) => {
+                return { key: element.key, component };
+              });
+            } else {
+              return Promise.resolve(null); // Devuelve una promesa resuelta con valor null para los elementos sin componente
             }
-          };
-       
-        axios
-          .get(urlBase + 'api/web/'+this.business+'/structure',config)
-          .then(response => {
-            console.log(response.data);
-            this.structure = response.data.structure ?? [];
-          })
-          .catch(error => {
-            this.errorMessage = 'Se produjo un erro al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
-            // Ocurrió un error al enviar la solicitud
-            console.error(error); // Imprime el error en la consola
-            // Puedes mostrar un mensaje de error aquí
           });
-      },
-    },
-    mounted() {
-      this.getServicesSection();
-      const cssFiles = [
-        "/css/icofont/icofont.min.css",
-        "/css/boxicons/css/boxicons.min.css",
-        "/css/remixicon/remixicon.css",
-      ];
 
-      cssFiles.forEach((cssFile) => {
-        const link = document.createElement("link");
-        link.href = cssFile;
-        link.rel = "stylesheet";
-        document.head.appendChild(link);
-      });
+          Promise.all(componentPromises).then((components) => {
+            components.forEach(({ key, component }) => {
+              // Asignar el componente al objeto $options.components
+              this.$options.components[key] = component;
+              this.loadedComponents.push(key); // Registrar el componente cargado
+            });
+
+            setTimeout(() => {
+              this.isLoading = false;
+            }, 1000);
+            // Los componentes han sido importados, dejar de mostrar el círculo de carga
+          });
+        })
+        .catch((error) => {
+          this.errorMessage =
+            "Se produjo un error al consultar datos. Por favor, inténtalo de nuevo."; // Mostrar mensaje de error
+          // Ocurrió un error al enviar la solicitud
+          console.error(error); // Imprime el error en la consola
+          // Puedes mostrar un mensaje de error aquí
+        });
     },
-    created() {
-    // Accede al parámetro pasado en la URL usando $route.params
-        this.business = this.$route.params.id;
+    HadleChange() {
+      this.gestion = !this.gestion;
+    },
+    isComponentLoaded(componentKey) {
+      return this.loadedComponents.includes(componentKey);
     }
-  };
-  </script>
+  },
+  mounted() {
+    this.getServicesSection();
+    const cssFiles = [
+      "/css/icofont/icofont.min.css",
+      "/css/boxicons/css/boxicons.min.css",
+      "/css/remixicon/remixicon.css",
+    ];
+
+    cssFiles.forEach((cssFile) => {
+      const link = document.createElement("link");
+      link.href = cssFile;
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    });
+  },
+  created() {
+    // Accede al parámetro pasado en la URL usando $route.params
+    this.business = this.$route.params.id;
+  },
+};
+</script>
 
 <style scoped>
+
+.loading-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 8px solid #ddd;
+  border-top-color: #47b2e4;
+  animation: loading-circle-rotate 1s linear infinite;
+  margin: 0 auto;
+  margin-top: 50px;
+}
+
+@keyframes loading-circle-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 /*--------------------------------------------------------------
 # Back to top button
 --------------------------------------------------------------*/

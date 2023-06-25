@@ -3,60 +3,62 @@
     <button class="btn btn-primary" @click="openModal">Crear Nuevo</button>
 
     <div v-if="modalOpen" class="modal-overlay">
-      <div class="modal-content">
-        <div class="header-modal">
-          <h3 v-if="component != 'ChatBot'">Registrar</h3>
-          <p :class="{ 'text-black': component === 'ChatBot' }" v-else>Registra la información de tu empresa</p>
-          <button @click="closeModal">X</button>
-        </div>
-        <form>
-          <div v-for="(field, index) in formFields" :key="index" class="mb-3">
-            <div class="mb-3">
-              <label :for="field.name" class="form-label">{{ field.label }}</label>
-              <select
-                v-if="field.type === 'select'"
-                :id="field.name"
-                :name="field.name"
-                class="form-select"
-                v-model="formData[field.name]"
-              >
-                <option v-for="option in field.options" :value="option.value" :key="option.value">{{ option.label }}</option>
-              </select>
-              <input
-                v-else-if="field.type === 'file'"
-                :type="field.type"
-                :id="field.name"
-                :name="field.name"
-                class="form-control"
-                @change="handleFileUpload"
-              />
-              <div v-else-if="field.type === 'multi-text'">
-                <div v-for="(value, valueIndex) in formData[field.name]" :key="valueIndex">
-                  <input
-                    :type="field.subType || 'text'"
-                    :id="field.name + '-' + valueIndex"
-                    :name="field.name"
-                    :placeholder="field.placeholder"
-                    class="form-control"
-                    v-model="formData[field.name][valueIndex]"
-                  />
-                  <button type="button" class="btn btn-danger" @click="removeDescriptionField(field.name, valueIndex)">Quitar</button>
-                </div>
-                <button type="button" class="btn btn-primary" @click="addDescriptionField(field.name)">Agregar</button>
-              </div>
-              <input
-                v-else
-                :type="field.type"
-                :id="field.name"
-                :name="field.name"
-                :placeholder="field.placeholder"
-                class="form-control"
-                v-model="formData[field.name]"
-              />
-            </div>
+      <div class="modal-wrapper">
+        <div class="modal-content overflow-auto">
+          <div class="header-modal">
+            <h3 v-if="component != 'ChatBot'">Registrar</h3>
+            <h3 v-else>Registra la información de tu empresa</h3>
+            <button @click="closeModal">Cerrar</button>
           </div>
-          <button type="button" class="btn btn-primary" @click="submitForm">Enviar</button>
-        </form>
+          <form>
+            <div v-for="(field, index) in formFields" :key="index" class="mb-3">
+              <div class="mb-3">
+                <label :for="field.name" class="form-label">{{ field.label }}</label>
+                <select
+                  v-if="field.type === 'select'"
+                  :id="field.name"
+                  :name="field.name"
+                  class="form-select"
+                  v-model="formData[field.name]"
+                >
+                  <option v-for="option in field.options" :value="option.value" :key="option.value">{{ option.label }}</option>
+                </select>
+                <input
+                  v-else-if="field.type === 'file'"
+                  :type="field.type"
+                  :id="field.name"
+                  :name="field.name"
+                  class="form-control"
+                  @change="handleFileUpload"
+                />
+                <div v-else-if="field.type === 'multi-text'">
+                  <div v-for="(value, valueIndex) in formData[field.name]" :key="valueIndex">
+                    <input
+                      :type="field.subType || 'text'"
+                      :id="field.name + '-' + valueIndex"
+                      :name="field.name"
+                      :placeholder="field.placeholder"
+                      class="form-control"
+                      v-model="formData[field.name][valueIndex]"
+                    />
+                    <button type="button" class="btn btn-danger" @click="removeDescriptionField(field.name, valueIndex)">Quitar</button>
+                  </div>
+                  <button type="button" class="btn btn-primary" @click="addDescriptionField(field.name)">Agregar</button>
+                </div>
+                <input
+                  v-else
+                  :type="field.type"
+                  :id="field.name"
+                  :name="field.name"
+                  :placeholder="field.placeholder"
+                  class="form-control"
+                  v-model="formData[field.name]"
+                />
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary" @click="submitForm">Enviar</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -94,7 +96,7 @@
             axios
                 .get(urlBase + 'api/form/'+clientId+'/' +this.component)
                 .then(response => {
-                  console.log(response.data.structure);
+
                   this.formFields = response.data.structure ?? [];
                 })
                 .catch(error => {
@@ -175,6 +177,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 9999;
 }
 
 .modal-content {
@@ -191,6 +194,18 @@
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
+  color: black;
+}
+
+.form-label{
+  color: black;
+}
+
+.modal-wrapper {
+  max-height: calc(100vh - 40px);
+  width: 400px;
+  max-width: 100%;
+  overflow-y: auto;
 }
 
 .v-menu__content {

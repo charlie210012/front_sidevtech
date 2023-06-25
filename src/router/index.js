@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeComponent from '../components/Home.vue';
 import LoginComponent from '../components/login/login.vue';
 import PreviewComponent from '../components/utils/PreviewComponent.vue';
-
+import BuildComponent from '../components/utils/BuildComponent.vue';
 
 const routes = [
   {
@@ -17,14 +17,21 @@ const routes = [
   {
     path: '/preview/:id',
     name: 'Preview',
-    component: PreviewComponent
+    component: PreviewComponent,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/build/:id',
+    name: 'Build',
+    component: BuildComponent,
+    meta: { requiresAuth: true }
   },
   {
     path: '/dashboard',
     name: 'Dashboard',
     component: HomeComponent,
     meta: { requiresAuth: true }
-  },
+  }
   // Agrega más rutas aquí
 ];
 

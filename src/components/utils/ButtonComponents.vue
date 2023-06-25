@@ -6,7 +6,7 @@
           :key="index"
           type="button"
           class="btn btn-primary"
-          @click="activeComponent(item.component)"
+          @click="activeComponent(item.key)"
         >
           {{ item.text }}
         </button>
@@ -48,7 +48,6 @@
           });
       },
       activeComponent(value) {
-        console.log(value);
         this.$emit('submit-clicked', {
             component: value,
             message: 'Realiza los ajustes que necesites',

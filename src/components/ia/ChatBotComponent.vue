@@ -3,6 +3,15 @@
     <div class="chatbot-header bg-dark text-light">
       <img src="./assets/images/sai.png" alt="Chatbot Avatar" class="chatbot-avatar">
       <h3 class="chatbot-title">Sistema de Asistencia Inteligente (SAI)</h3>
+      <select 
+        id="business" 
+        name="business" 
+        class="form-select ml-auto"
+        v-model="selectedBusiness"
+        @change="changeClient"
+      >
+        <option v-for="(business, index) in businesses" :value="business.business_id" :key="index">{{ business.name }}</option>
+      </select>
       <button class="logout-button ml-auto" @click="logout">Cerrar sesión</button>
     </div>
     <div class="chatbot-messages">
@@ -40,23 +49,12 @@
 <script>
 import axios from "axios";
 import {VProgressCircular} from 'vuetify/components';
-const dir = localStorage.getItem("clientId");
-const ServicesSection = dir != null ? require(`../webs/${dir}/ServicesSection.vue`).default : null;
-const ServicesForm = dir != null ? require(`../webs/${dir}/forms/ServicesForm.vue`).default : null;
-const WhyUsSection = dir != null ? require(`../webs/${dir}/WhyUsSection.vue`).default : null;
-const TeamSection = dir != null ? require(`../webs/${dir}/TeamSection.vue`).default : null;
-const AboutSection = dir != null ? require(`../webs/${dir}/AboutSection.vue`).default : null;
-const ChatBot = dir != null ? require(`../webs/${dir}/ChatBot.vue`).default : null;
-const ContactSection = dir != null ? require(`../webs/${dir}/ContactSection.vue`).default : null;
-const CTASection = dir != null ? require(`../webs/${dir}/CTASection.vue`).default : null;
-const FooterApp = dir != null ? require(`../webs/${dir}/FooterApp.vue`).default : null;
-const HeaderApp = dir != null ? require(`../webs/${dir}/HeaderApp.vue`).default : null;
-const HeroSection = dir != null ? require(`../webs/${dir}/HeroSection.vue`).default : null;
-const PortfolioSection = dir != null ? require(`../webs/${dir}/PortfolioSection.vue`).default : null;
-const PricingSection = dir != null ? require(`../webs/${dir}/PricingSection.vue`).default : null;
-const SkillsSection = dir != null ? require(`../webs/${dir}/SkillsSection.vue`).default : null;
 import ButtonComponents from "../utils/ButtonComponents.vue";
 import ButtonPreview from "../utils/ButtonPreview.vue";
+import ConstructorComponent from "../utils/ConstructorComponent.vue";
+import ContinueConstructorComponent from "../utils/ContinueConstructorComponent.vue";
+import moment from 'moment';
+
 
 const format = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false, timeZone: 'America/Bogota' };
 
@@ -65,6 +63,10 @@ export default {
   data() {
     return {
       messages: [],
+      refPayco: null,
+      structure: [],
+      businesses : [],
+      selectedBusiness: '',
       inputMessage: '',
       imageUser: require('./assets/images/SaiCloud.svg'),
       imageSai: require('./assets/images/sai.png'),
@@ -81,23 +83,11 @@ export default {
   },
   components:{
     VProgressCircular,
-    ServicesSection,
-    ServicesForm,
-    WhyUsSection,
-    TeamSection,
-    AboutSection,
-    ChatBot,
-    ContactSection,
-    CTASection,
-    FooterApp,
-    HeaderApp,
-    HeroSection,
-    PortfolioSection,
-    PricingSection,
-    SkillsSection,
     ButtonComponents,
-    ButtonPreview
-},
+    ButtonPreview,
+    ConstructorComponent,
+    ContinueConstructorComponent,
+  },
   methods: {
     toggleChatbot() {
       // Lógica para mostrar/ocultar el chatbot
@@ -135,19 +125,30 @@ export default {
         },})
       .then(response => {
 
-        console.log(response.data);
-
           this.consult = false;
           // Agregar la respuesta del servidor al chat
-          this.addMessage({
-            id:1,
-            sender: 'bot',
-            content: response.data.message,
-            link: '',
-            activeComponent: response.data.activeComponent ?? false,
-            component: response.data.component ?? null,
-            timestamp: new Date().toLocaleTimeString('es-ES',format)
-          });
+          if(this.structure.length == 0){
+            this.addMessage({
+              id:1,
+              sender: 'bot',
+              content: 'Aun no has creado una pagina web para tu empresa, Quieres crear una?',
+              link: '',
+              activeComponent: response.data.activeComponent ?? false,
+              component: 'ConstructorComponent',
+              timestamp: new Date().toLocaleTimeString('es-ES',format)
+            });
+          }else{
+            this.addMessage({
+              id:1,
+              sender: 'bot',
+              content: response.data.message,
+              link: '',
+              activeComponent: response.data.activeComponent ?? false,
+              component: response.data.component ?? null,
+              timestamp: new Date().toLocaleTimeString('es-ES',format)
+            });
+          }
+          
 
          
 
@@ -174,15 +175,149 @@ export default {
       });
     },
     logout() {
-    // Realiza las acciones necesarias para cerrar la sesión del usuario
-    // Por ejemplo, puedes borrar el token de acceso almacenado en el local storage
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('clientId');
-    localStorage.removeItem('userToken');
-    // Redirecciona al usuario a la página de inicio de sesión
-    this.$router.push('/login');
-  }
+      // Realiza las acciones necesarias para cerrar la sesión del usuario
+      // Por ejemplo, puedes borrar el token de acceso almacenado en el local storage
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('clientId');
+      localStorage.removeItem('userToken');
+      // Redirecciona al usuario a la página de inicio de sesión
+      this.$router.push('/login');
+    },
+    getServicesSection() {
+      const urlBase = localStorage.getItem('urlBase');
+      const clientId = localStorage.getItem('clientId');
 
+      const config = {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('userToken')
+        }
+      };
+
+      axios
+        .get(urlBase + 'api/web/' + clientId + '/structure', config)
+        .then(response => {
+          this.structure = response.data.structure ?? [];
+
+          const componentPromises = this.structure.map(element => {
+            if (element.component) {
+              return import(`../webs/${element.component}.vue`).then(({ default: component }) => {
+                return { key: element.key, component };
+              });
+            }
+          });
+
+          Promise.all(componentPromises).then(components => {
+            components.forEach(({ key, component }) => {
+              // Asignar el componente al objeto $options.components
+              this.$options.components[key] = component;
+            });
+          });
+        })
+        .catch(error => {
+          this.errorMessage =
+            'Se produjo un error al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
+          // Ocurrió un error al enviar la solicitud
+          console.error(error); // Imprime el error en la consola
+          // Puedes mostrar un mensaje de error aquí
+        });
+    },
+    getClients() {
+      const urlBase = localStorage.getItem('urlBase');
+
+      const config = {
+        headers: {
+          Authorization: 'Bearer ' + localStorage.getItem('userToken')
+        }
+      };
+
+      axios
+        .get(urlBase + 'api/business', config)
+        .then(response => {
+          this.businesses = response.data.businesses;
+          localStorage.setItem('businesses', JSON.stringify(this.businesses));
+          this.selectedBusiness = localStorage.getItem("clientId");
+          this.getServicesSection();
+          
+        })
+        .catch(error => {
+          this.errorMessage =
+            'Se produjo un error al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
+          // Ocurrió un error al enviar la solicitud
+          console.error(error); // Imprime el error en la consola
+          // Puedes mostrar un mensaje de error aquí
+        });
+    },
+    changeClient(){
+      localStorage.setItem("clientId", this.selectedBusiness);
+      this.getServicesSection();
+    },
+    getTransacion(){
+      const urlBase = "https://secure.epayco.co/validation/v1/reference/";
+
+      axios
+        .get(urlBase + this.refPayco)
+        .then(response => {
+          console.log(response.data.data);
+          // Parsea la fecha utilizando Moment.js
+          let date = moment(response.data.data.x_fecha_transaccion, 'YYYY-MM-DD HH:mm:ss');
+
+          // Suma 6 meses a la fecha
+          let newDate = date.add(6, 'months');
+
+          // Obtén la nueva fecha en el formato deseado
+          let finalDate = newDate.format('YYYY-MM-DD HH:mm:ss');
+          const data = {
+            transaction_id: this.refPayco,
+            description: response.data.data.x_description,
+            amount: response.data.data.x_amount,
+            status: response.data.data.x_response_reason_text == "Aprobada"?1:0,
+            payer_name: response.data.data.x_customer_name,
+            business_id: localStorage.getItem("clientId"),
+            payment_date: response.data.data.x_fecha_transaccion,
+            expiration_date: finalDate,
+            payer_email: response.data.data.x_customer_email,
+            data: JSON.stringify(response.data.data)
+          }
+
+          this.registerTransaccion(data);
+          // this.businesses = response.data.businesses;
+          // localStorage.setItem('businesses', JSON.stringify(this.businesses));
+          // this.selectedBusiness = localStorage.getItem("clientId");
+          // this.getServicesSection();
+          
+        })
+        .catch(error => {
+          this.errorMessage =
+            'Se produjo un error al consultar datos. Por favor, inténtalo de nuevo.'; // Mostrar mensaje de error
+          // Ocurrió un error al enviar la solicitud
+          console.error(error); // Imprime el error en la consola
+          // Puedes mostrar un mensaje de error aquí
+        });
+    },
+    async registerTransaccion(data) {
+      const urlBase = localStorage.getItem('urlBase');
+      const clientId = localStorage.getItem("clientId");
+      const requestBody = data;
+
+      const config = {
+        headers: {
+          Authorization: 'Bearer '+ localStorage.getItem('userToken')
+        }
+      };
+
+      axios.post(urlBase + 'api/payment/'+clientId, requestBody, config)
+        .then(response => {
+          console.log(response.data);
+          
+          // Realizar acciones después de la solicitud exitosa
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          // Realizar acciones en caso de error
+        });
+
+      this.modalOpen = false;
+    },
   },
   mounted() {
     setTimeout(() => {
@@ -196,7 +331,30 @@ export default {
             timestamp: new Date().toLocaleTimeString('es-ES',format)
         });
     }, 1000);
-  }
+
+    if(this.refPayco != null) {
+      this.getTransacion();
+      setTimeout(() => {
+        this.addMessage({
+            id:1,
+            sender: 'bot',
+            content: "Tu pago fue realizado con exito, ya puedes publicar tu pagina web",
+            link: '',
+            activeComponent:true,
+            component:ButtonPreview,
+            timestamp: new Date().toLocaleTimeString('es-ES',format)
+        });
+    }, 1200);
+    }
+
+    this.getServicesSection(); 
+    this.getClients();
+   
+  },
+  created() {
+    this.getClients();
+    this.refPayco = this.$route.query.ref_payco;
+  },
 };
 </script>
 
@@ -300,5 +458,9 @@ export default {
     height: 90%;
     max-height: 90%;
   }
+}
+
+.form-select{
+  width: 20%;
 }
 </style>
